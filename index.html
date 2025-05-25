@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Léa Tecidos - Cadastro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #faf6f2;
+        }
+        
+        .title-font {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .fabric-pattern {
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2IiBoZWlnaHQ9IjYiPgo8cmVjdCB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjZmZmZmZmIj48L3JlY3Q+CjxwYXRoIGQ9Ik0wIDBMNiA2IiBzdHJva2U9IiNlZGVkZWQiIHN0cm9rZS13aWR0aD0iMSI+PC9wYXRoPgo8cGF0aCBkPSJNNiAwTDAgNiIgc3Ryb2tlPSIjZWRlZGVkIiBzdHJva2Utd2lkdGg9IjEiPjwvcGF0aD4KPC9zdmc+');
+            opacity: 0.6;
+        }
+        
+        .input-focus:focus {
+            box-shadow: 0 0 0 2px #a78bfa;
+            border-color: #8b5cf6;
+        }
+        
+        .submit-btn {
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.3);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden">
+        <!-- Decorative fabric header -->
+        <div class="relative h-24 fabric-pattern">
+            <div class="absolute inset-0 bg-purple-100 bg-opacity-60 flex items-center justify-center">
+                <h1 class="title-font text-3xl font-bold text-purple-900">Léa Tecidos</h1>
+            </div>
+        </div>
+        
+        <div class="p-8">
+            <div class="text-center mb-8">
+                <h2 class="title-font text-2xl text-gray-800 mb-2">Cadastre-se</h2>
+                <p class="text-gray-600">Receba nossas novidades e promoções</p>
+            </div>
+            
+            <form id="contactForm" class="space-y-6">
+                <div class="space-y-1">
+                    <label for="name" class="block text-sm font-medium text-gray-700">
+                        <i class="fas fa-user mr-2 text-purple-500"></i>Nome
+                    </label>
+                    <input type="text" id="name" name="name" required 
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none input-focus transition duration-200"
+                           placeholder="Seu nome">
+                </div>
+                
+                <div class="space-y-1">
+                    <label for="surname" class="block text-sm font-medium text-gray-700">
+                        <i class="fas fa-user-tag mr-2 text-purple-500"></i>Sobrenome
+                    </label>
+                    <input type="text" id="surname" name="surname" required 
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none input-focus transition duration-200"
+                           placeholder="Seu sobrenome">
+                </div>
+                
+                <div class="space-y-1">
+                    <label for="phone" class="block text-sm font-medium text-gray-700">
+                        <i class="fas fa-mobile-alt mr-2 text-purple-500"></i>Celular
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500">+55</span>
+                        </div>
+                        <input type="tel" id="phone" name="phone" required 
+                               class="w-full pl-12 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none input-focus transition duration-200"
+                               placeholder="(00) 00000-0000"
+                               pattern="\([0-9]{2}\) [0-9]{5}-[0-9]{4}">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Formato: (99) 99999-9999</p>
+                </div>
+                
+                <div class="pt-4">
+                    <button type="submit" id="submitBtn" class="submit-btn w-full py-3 px-4 rounded-lg text-white font-semibold">
+                        <i class="fas fa-fabric mr-2"></i>Cadastrar
+                    </button>
+                </div>
+            </form>
+            
+            <div class="mt-6 text-center text-sm text-gray-500">
+                <p>Seus dados estão seguros conosco</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Success modal (hidden by default) -->
+    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-xl p-8 max-w-sm w-full mx-4 text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-check text-green-500 text-2xl"></i>
+            </div>
+            <h3 class="title-font text-xl text-gray-800 mb-2">Cadastro realizado!</h3>
+            <p class="text-gray-600 mb-6">Obrigado por se cadastrar na Léa Tecidos.</p>
+            <button onclick="closeModal()" class="bg-purple-500 text-white px-6 py-2 rounded-lg hover:bg-purple-600 transition">
+                Fechar
+            </button>
+        </div>
+    </div>
+    
+    <!-- Error modal (hidden by default) -->
+    <div id="errorModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-xl p-8 max-w-sm w-full mx-4 text-center">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation text-red-500 text-2xl"></i>
+            </div>
+            <h3 class="title-font text-xl text-gray-800 mb-2">Erro no cadastro</h3>
+            <p id="errorMessage" class="text-gray-600 mb-6">Ocorreu um erro ao tentar cadastrar. Por favor, tente novamente.</p>
+            <button onclick="closeErrorModal()" class="bg-purple-500 text-white px-6 py-2 rounded-lg hover:bg-purple-600 transition">
+                Fechar
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAYCDuVgcRjarXTqOLG-WN4wESTKkMSbi4",
+            authDomain: "lea-tecidos.firebaseapp.com",
+            databaseURL: "lea-tecidos",
+            projectId: "lea-tecidos",
+            storageBucket: "lea-tecidos.firebasestorage.app",
+            messagingSenderId: "426614721178",
+            appId: "1:426614721178:web:e6092b12bac66d3eceed23"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // Referência para o banco de dados
+        const clientesRef = database.ref('clientes');
+        
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Mostrar loading no botão
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerHTML = '<span class="loading-spinner"></span> Cadastrando...';
+            submitBtn.disabled = true;
+            
+            // Get form values
+            const name = document.getElementById('name').value.trim();
+            const surname = document.getElementById('surname').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const timestamp = new Date().toISOString();
+            
+            // Validate phone format
+            const phoneRegex = /^\(\d{2}\) \d{5}-\d{4}$/;
+            if (!phoneRegex.test(phone)) {
+                showError('Por favor, insira um número de celular válido no formato (99) 99999-9999');
+                submitBtn.innerHTML = '<i class="fas fa-fabric mr-2"></i>Cadastrar';
+                submitBtn.disabled = false;
+                return;
+            }
+            
+            // Criar objeto com os dados do cliente
+            const clienteData = {
+                nome: name,
+                sobrenome: surname,
+                telefone: phone,
+                dataCadastro: timestamp
+            };
+            
+            // Salvar no Firebase
+            clientesRef.push(clienteData)
+                .then(() => {
+                    // Mostrar modal de sucesso
+                    document.getElementById('successModal').classList.remove('hidden');
+                    
+                    // Resetar formulário
+                    this.reset();
+                    
+                    // Restaurar botão
+                    submitBtn.innerHTML = '<i class="fas fa-fabric mr-2"></i>Cadastrar';
+                    submitBtn.disabled = false;
+                })
+                .catch((error) => {
+                    console.error('Erro ao salvar no Firebase:', error);
+                    showError('Ocorreu um erro ao tentar cadastrar. Por favor, tente novamente.');
+                    
+                    // Restaurar botão
+                    submitBtn.innerHTML = '<i class="fas fa-fabric mr-2"></i>Cadastrar';
+                    submitBtn.disabled = false;
+                });
+        });
+        
+        // Phone number mask
+        document.getElementById('phone').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            if (value.length > 0) {
+                value = '(' + value;
+            }
+            if (value.length > 3) {
+                value = value.substring(0, 3) + ') ' + value.substring(3);
+            }
+            if (value.length > 10) {
+                value = value.substring(0, 10) + '-' + value.substring(10);
+            }
+            if (value.length > 15) {
+                value = value.substring(0, 15);
+            }
+            
+            e.target.value = value;
+        });
+        
+        function closeModal() {
+            document.getElementById('successModal').classList.add('hidden');
+        }
+        
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorModal').classList.remove('hidden');
+        }
+        
+        function closeErrorModal() {
+            document.getElementById('errorModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
