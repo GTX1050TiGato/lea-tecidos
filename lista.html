@@ -7,41 +7,102 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .fabric-bg {
-            background-color: #f9f7f6;
-            background-image: 
-                linear-gradient(rgba(251, 113, 133, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(251, 113, 133, 0.1) 1px, transparent 1px);
-            background-size: 30px 30px;
+     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600&display=swap');
+        
+        :root {
+            --primary: #7e3af2;
+            --primary-light: #a78bfa;
+            --secondary: #f472b6;
+            --dark: #1f2937;
+            --light: #f9fafb;
         }
-        .card-shadow {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            min-height: 100vh;
         }
-        .header-gradient {
-            background: linear-gradient(135deg, #fb7185 0%, #f43f5e 100%);
+        
+        .title-font {
+            font-family: 'Playfair Display', serif;
+            letter-spacing: 0.5px;
         }
-        .fabric-item:hover {
+        
+        .card-gradient {
+            background: linear-gradient(to bottom right, white 0%, #fdf4ff 100%);
+            box-shadow: 0 10px 30px -10px rgba(126, 58, 242, 0.15);
+        }
+        
+        .fabric-texture {
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2IiBoZWlnaHQ9IjYiPgo8cmVjdCB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjZmZmZmZmIj48L3JlY3Q+CjxwYXRoIGQ9Ik0wIDBMNiA2IiBzdHJva2U9IiNlZGVkZWQiIHN0cm9rZS13aWR0aD0iMC41Ij48L3BhdGg+CjxwYXRoIGQ9Ik02IDBMMCA2IiBzdHJva2U9IiNlZGVkZWQiIHN0cm9rZS13aWR0aD0iMC41Ij48L3BhdGg+Cjwvc3ZnPg==');
+            opacity: 0.4;
+        }
+        
+        .input-focus:focus {
+            box-shadow: 0 0 0 3px rgba(126, 58, 242, 0.2);
+            border-color: var(--primary);
+        }
+        
+        .submit-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            letter-spacing: 0.5px;
+        }
+        
+        .submit-btn:hover {
             transform: translateY(-2px);
-            transition: transform 0.2s ease;
+            box-shadow: 0 10px 20px -5px rgba(126, 58, 242, 0.4);
         }
-        .animate-pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
         }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
-        .confirmation-dialog {
-            transition: all 0.3s ease;
+        
+        .floating {
+            animation: floating 3s ease-in-out infinite;
         }
-        .slide-in {
-            animation: slideIn 0.3s ease-out;
+        
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
         }
-        @keyframes slideIn {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        
+        .text-gradient {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .border-gradient {
+            border: 2px solid transparent;
+            background: linear-gradient(white, white) padding-box,
+                        linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%) border-box;
+        }
+        
+        .forgot-password {
+            color: var(--primary);
+            transition: all 0.2s ease;
+        }
+        
+        .forgot-password:hover {
+            color: var(--primary-light);
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -49,10 +110,17 @@
     <div class="max-w-6xl mx-auto">
         <!-- Header -->
         <div class="header-gradient rounded-t-xl p-6 text-center text-white mb-6">
-            <div class="flex items-center justify-center mb-2">
-                <i class="fas fa-tshirt text-3xl mr-3"></i>
-                <h1 class="text-3xl font-bold">Léa Tecidos</h1>
-            </div>
+            
+<div class="flex justify-between items-center">
+    <div class="flex items-center mb-2">
+        <i class="fas fa-tshirt text-3xl mr-3"></i>
+        <h1 class="text-3xl font-bold">Léa Tecidos</h1>
+    </div>
+    <button onclick="logout()" class="bg-white text-rose-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition">
+        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+    </button>
+</div>
+            
             <p class="text-lg opacity-90">Gerenciamento de Clientes</p>
         </div>
         
@@ -166,6 +234,15 @@
             messagingSenderId: "426614721178",
             appId: "1:426614721178:web:e6092b12bac66d3eceed23"
         };
+        function logout() {
+        firebase.auth().signOut()
+        .then(() => {
+            window.location.href = 'login.html'; // redirecionar após logout
+        })
+        .catch((error) => {
+            alert('Erro ao sair: ' + error.message);
+        });
+}
 
         // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
@@ -257,6 +334,11 @@
                 return false;
             }
         }
+        firebase.auth().onAuthStateChanged((user) => {
+    if (!user) {
+        window.location.href = 'login.html';
+    }
+});
 
         // Show confirmation dialog
         function showConfirmationDialog(customerId) {
