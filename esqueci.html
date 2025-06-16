@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Léa Tecidos - Recuperar Senha</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #f3f0ff 0%, #e9defa 100%);
+    color: #5b21b6;
+  }
+  .header-gradient {
+    background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+    box-shadow: 0 4px 20px rgba(123, 58, 237, 0.3);
+  }
+  .card {
+    box-shadow: 0 10px 30px rgba(123, 58, 237, 0.15);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+  }
+  .card:hover {
+    transform: translateY(-5px);
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(123, 58, 237, 0.4);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(123, 58, 237, 0.5);
+  }
+  .input-field {
+    transition: all 0.3s ease;
+    border: 2px solid #ddd;
+  }
+  .input-field:focus {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(123, 58, 237, 0.2);
+  }
+</style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+  <div class="max-w-md w-full bg-white card animate__animated animate__fadeIn">
+    <div class="header-gradient rounded-t-xl p-8 text-center text-white">
+      <div class="flex justify-center mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      </div>
+      <h1 class="text-3xl font-bold mb-2">Léa Tecidos</h1>
+      <p class="text-lg opacity-90">Recuperação de Senha</p>
+    </div>
+
+    <div class="p-8">
+      <form id="resetForm" class="flex flex-col gap-6">
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700 mb-1">E-mail cadastrado</label>
+          <input
+            type="email"
+            id="email"
+            placeholder="seu@email.com"
+            required
+            class="input-field w-full rounded-lg px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none"
+          />
+        </div>
+        
+        <button
+          type="submit"
+          class="btn-primary text-white font-semibold rounded-lg px-4 py-3"
+        >
+          <span class="flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+              <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+            </svg>
+            Enviar link de recuperação
+          </span>
+        </button>
+      </form>
+
+      <div id="message" class="mt-4 p-4 bg-green-50 text-green-700 rounded-lg hidden"></div>
+      <div id="error" class="mt-4 p-4 bg-red-50 text-red-700 rounded-lg hidden"></div>
+
+      <div class="mt-6 text-center">
+        <p class="text-gray-600">Lembrou sua senha?</p>
+        <button
+          onclick="window.location.href='login.html'"
+          class="text-purple-700 hover:text-purple-900 font-medium hover:underline mt-2 transition"
+        >
+          Voltar para login
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Config Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAYCDuVgcRjarXTqOLG-WN4wESTKkMSbi4",
+      authDomain: "lea-tecidos.firebaseapp.com",
+      databaseURL: "https://lea-tecidos-default-rtdb.firebaseio.com",
+      projectId: "lea-tecidos",
+      storageBucket: "lea-tecidos.appspot.com",
+      messagingSenderId: "426614721178",
+      appId: "1:426614721178:web:e6092b12bac66d3eceed23"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    const form = document.getElementById('resetForm');
+    const messageEl = document.getElementById('message');
+    const errorEl = document.getElementById('error');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      messageEl.classList.add('hidden');
+      errorEl.classList.add('hidden');
+      
+      const email = form.email.value;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalBtnText = submitBtn.innerHTML;
+      
+      // Mostrar loading no botão
+      submitBtn.innerHTML = `
+        <span class="flex items-center justify-center">
+          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Enviando...
+        </span>
+      `;
+      submitBtn.disabled = true;
+
+      try {
+        await auth.sendPasswordResetEmail(email);
+        messageEl.textContent = '✔ Link de recuperação enviado para seu e-mail. Verifique sua caixa de entrada.';
+        messageEl.classList.remove('hidden');
+        form.reset();
+      } catch (error) {
+        errorEl.textContent = '✖ Erro: ' + error.message.replace('Firebase: ', '');
+        errorEl.classList.remove('hidden');
+      } finally {
+        submitBtn.innerHTML = originalBtnText;
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
