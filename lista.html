@@ -179,6 +179,9 @@
                             <button class="delete-btn p-2 text-gray-400 hover:text-red-500 transition-colors" title="Excluir cliente">
                                 <i class="fas fa-trash"></i>
                             </button>
+                            <button class="whatsapp-btn p-2 text-gray-400 hover:text-green-500 transition-colors" title="Conversar no WhatsApp">
+                                 <i class="fab fa-whatsapp"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -352,79 +355,111 @@
             currentCustomerId = null;
         }
 
-        // Load customers from Firebase
-        function loadCustomers() {
-            try {
-                checkEssentialElements();
-                
-                // Mostrar estado de carregamento
-                domElements.loading.classList.remove('hidden');
-                domElements.emptyState.classList.add('hidden');
-                domElements.errorState.classList.add('hidden');
-                domElements.customersList.classList.add('hidden');
+// Load customers from Firebase
+function loadCustomers() {
+    try {
+        checkEssentialElements();
+        
+        // Mostrar estado de carregamento
+        domElements.loading.classList.remove('hidden');
+        domElements.emptyState.classList.add('hidden');
+        domElements.errorState.classList.add('hidden');
+        domElements.customersList.classList.add('hidden');
 
-                // Referência para 'clientes'
-                database.ref('clientes').on('value', (snapshot) => {
-                    try {
-                        domElements.loading.classList.add('hidden');
-                        
-                        const customers = snapshot.val();
-                        
-                        if (!customers || Object.keys(customers).length === 0) {
-                            domElements.emptyState.classList.remove('hidden');
-                            return;
-                        }
-                        
-                        // Limpar lista (exceto o template)
-                        const existingCustomers = domElements.customersList.querySelectorAll('.customer-item');
-                        existingCustomers.forEach(customer => customer.remove());
-                        
-                        // Adicionar cada cliente
-                        Object.entries(customers).forEach(([key, customer]) => {
-                            const template = document.querySelector('.customer-template').cloneNode(true);
-                            template.classList.remove('customer-template', 'hidden');
-                            template.classList.add('customer-item');
-                            template.dataset.customerId = key;
-                            
-                            // Preencher dados
-                            const nameElement = template.querySelector('.customer-name');
-                            const phoneElement = template.querySelector('.customer-phone');
-                            const dateElement = template.querySelector('.customer-date-value');
-                            const deleteBtn = template.querySelector('.delete-btn');
-                            
-                            // Nome completo
-                            const fullName = `${customer.nome || ''} ${customer.sobrenome || ''}`.trim();
-                            nameElement.textContent = fullName || 'Nome não informado';
-                            
-                            // Telefone formatado
-                            phoneElement.textContent = formatPhone(customer.telefone);
-                            
-                            // Data formatada
-                            dateElement.textContent = formatDate(customer.dataCadastro);
-                            
-                            // Evento para deletar
-                            deleteBtn.addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                showConfirmationDialog(key);
-                            });
-                            
-                            domElements.customersList.appendChild(template);
+        // Referência para 'clientes'
+        database.ref('clientes').on('value', (snapshot) => {
+            try {
+                domElements.loading.classList.add('hidden');
+                
+                const customers = snapshot.val();
+                
+                if (!customers || Object.keys(customers).length === 0) {
+                    domElements.emptyState.classList.remove('hidden');
+                    return;
+                }
+                
+                // Limpar lista (exceto o template)
+                const existingCustomers = domElements.customersList.querySelectorAll('.customer-item');
+                existingCustomers.forEach(customer => customer.remove());
+                
+                // Adicionar cada cliente
+                Object.entries(customers).forEach(([key, customer]) => {
+                    const template = document.querySelector('.customer-template').cloneNode(true);
+                    template.classList.remove('customer-template', 'hidden');
+                    template.classList.add('customer-item');
+                    template.dataset.customerId = key;
+                    
+                    // Preencher dados
+                    const nameElement = template.querySelector('.customer-name');
+                    const phoneElement = template.querySelector('.customer-phone');
+                    const dateElement = template.querySelector('.customer-date-value');
+                    const deleteBtn = template.querySelector('.delete-btn');
+                    const whatsappBtn = template.querySelector('.whatsapp-btn');
+                    const whatsappLink = formatWhatsAppLink(customer.telefone);
+                    
+                    // Nome completo
+                    const fullName = `${customer.nome || ''} ${customer.sobrenome || ''}`.trim();
+                    nameElement.textContent = fullName || 'Nome não informado';
+                    
+                    // Telefone formatado
+                    phoneElement.textContent = formatPhone(customer.telefone);
+                    
+                    // Data formatada
+                    dateElement.textContent = formatDate(customer.dataCadastro);
+                    
+                    // Configurar botão do WhatsApp
+                    if (whatsappLink) {
+                        whatsappBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            window.open(whatsappLink, '_blank');
                         });
-                        
-                        domElements.customersList.classList.remove('hidden');
-                    } catch (error) {
-                        console.error('Erro ao processar clientes:', error);
-                        showError('Erro ao processar os dados dos clientes.');
+                    } else {
+                        whatsappBtn.style.display = 'none';
                     }
-                }, (error) => {
-                    console.error('Erro ao carregar clientes:', error);
-                    showError('Não foi possível conectar ao banco de dados.');
+                    
+                    // Evento para deletar
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showConfirmationDialog(key);
+                    });
+                    
+                    domElements.customersList.appendChild(template);
                 });
+                
+                domElements.customersList.classList.remove('hidden');
             } catch (error) {
-                console.error('Erro inicial:', error);
-                showError('Erro ao inicializar a aplicação.');
+                console.error('Erro ao processar clientes:', error);
+                showError('Erro ao processar os dados dos clientes.');
             }
+        }, (error) => {
+            console.error('Erro ao carregar clientes:', error);
+            showError('Não foi possível conectar ao banco de dados.');
+        });
+    } catch (error) {
+        console.error('Erro inicial:', error);
+        showError('Erro ao inicializar a aplicação.');
+    }
+}
+        // Função para formatar número para link do WhatsApp
+function formatWhatsAppLink(phone) {
+    if (!phone) return null;
+    
+    try {
+        // Remove tudo que não é dígito
+        const cleaned = phone.replace(/\D/g, '');
+        
+        // Verifica se tem o DDI (55 para Brasil)
+        let number = cleaned;
+        if (!number.startsWith('55')) {
+            number = '55' + number;
         }
+        
+        return `https://wa.me/${number}`;
+    } catch (error) {
+        console.error('Erro ao formatar para WhatsApp:', error);
+        return null;
+    }
+}
 
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', () => {
