@@ -8,11 +8,30 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
      <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600&display=swap');
+
+
         
+
+        emoji-picker {
+    --background: #272727;
+    --border-color: #b1b1b1;
+    --input-border-color: #000000;
+    --color: #000000;
+    --input-color: #000000;
+    --input-text-color: #000000;
+    --input-background: #000000;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    --input-border-radius: 8px;
+    --category-emoji-padding: 10px;
+    --font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+    width: 300px;
+}
+
         :root {
             --primary: #7e3af2;
             --primary-light: #a78bfa;
@@ -613,6 +632,47 @@ async function enviarPromocao() {
         sendBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar';
     }
 }
+    document.addEventListener('DOMContentLoaded', () => {
+    const emojiButton = document.getElementById('emojiButton');
+    const emojiPicker = document.getElementById('emojiPicker');
+    const textArea = document.getElementById('mensagemPromocao');
+
+    // Mostrar/ocultar o emoji picker
+    emojiButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation(); // Impede a propagação do evento
+        emojiPicker.classList.toggle('hidden');
+    });
+
+    // Inserir emoji no textarea quando selecionado
+    emojiPicker.addEventListener('emoji-click', (event) => {
+        const emoji = event.detail.unicode;
+        const startPos = textArea.selectionStart;
+        const endPos = textArea.selectionEnd;
+        
+        textArea.value = textArea.value.substring(0, startPos) + 
+                       emoji + 
+                       textArea.value.substring(endPos);
+        
+        textArea.selectionStart = textArea.selectionEnd = startPos + emoji.length;
+        textArea.focus();
+        
+        // Não fechamos o picker automaticamente após seleção
+    });
+
+    // Fechar o emoji picker apenas quando clicar fora
+    document.addEventListener('click', (e) => {
+        // Verifica se o clique foi fora do botão e do picker
+        if (!emojiButton.contains(e.target) && !emojiPicker.contains(e.target)) {
+            emojiPicker.classList.add('hidden');
+        }
+    });
+
+    // Adiciona um evento específico para o picker para evitar fechamento acidental
+    emojiPicker.addEventListener('click', (e) => {
+        e.stopPropagation(); // Impede que o evento chegue ao document
+    });
+});
 
     </script>
     <div id="promoModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
@@ -630,9 +690,19 @@ async function enviarPromocao() {
         </div>
         
         <div class="flex justify-end gap-3">
+            <div class="relative">
+                <button id="emojiButton" class="text-gray-500 mx-2 hover:text-gray-700 transition-colors">
+        <i class="far fa-face-smile text-xl"></i>
+        <emoji-picker id="emojiPicker" class="absolute bottom-10 left-0 z-10 hidden"></emoji-picker>
+    </button>
+    </div>
+ 
+
             <button onclick="closePromoModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
                 Cancelar
             </button>
+        
+
             <button onclick="enviarPromocao()" id="sendPromoBtn" class="px-4 py-2 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-lg hover:from-rose-600 hover:to-pink-700 transition">
                 <i class="fas fa-paper-plane mr-2"></i>Enviar
             </button>
