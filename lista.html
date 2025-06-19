@@ -109,7 +109,8 @@
 <body class="fabric-bg min-h-screen p-4">
     <div class="max-w-6xl mx-auto">
         <!-- Header -->
-        <div class="header-gradient rounded-t-xl p-6 text-center text-white mb-6">
+        <div class="bg-gradient-to-r from-red-300 to-rose-600 rounded-t-xl p-6 text-center text-white mb-6">
+            
             
 <div class="flex justify-between items-center">
     <div class="flex items-center mb-2">
@@ -119,6 +120,13 @@
     <button onclick="logout()" class="bg-white text-rose-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition">
         <i class="fas fa-sign-out-alt mr-2"></i>Logout
     </button>
+    
+</div>
+<div>
+    <button onclick="openPromoModal()" class="bg-white text-rose-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition ml-4">
+        <i class="fas fa-bullhorn mr-2"></i>Enviar mensagem para todos os clientes!
+    </button>
+
 </div>
             
             <p class="text-lg opacity-90">Gerenciamento de Clientes</p>
@@ -179,7 +187,7 @@
                             <button class="delete-btn p-2 text-gray-400 hover:text-red-500 transition-colors" title="Excluir cliente">
                                 <i class="fas fa-trash"></i>
                             </button>
-                            <button class="whatsapp-btn p-2 text-gray-400 hover:text-green-500 transition-colors" title="Conversar no WhatsApp">
+                            <button class="whatsapp-btn p-2 text-gray-400 hover:text-green-500 transition-colors" title="Conversar com o cliente">
                                  <i class="fab fa-whatsapp"></i>
                             </button>
                         </div>
@@ -493,6 +501,153 @@ function formatWhatsAppLink(phone) {
                 showError('Erro crítico ao carregar a página.');
             }
         });
+
+
+
+async function enviarPromocao() {
+  const mensagem = document.getElementById('mensagemPromocao').value;
+  
+  // Chamar sua Cloud Function ou API
+  const response = await fetch('https://sua-cloud-function-url/enviarPromocoes', {
+    method: 'POST',
+    body: JSON.stringify({ mensagem }),
+    headers: { 'Content-Type': 'application/json' }
+  });
+  
+  const result = await response.json();
+  alert(result);
+}
+    function openPromoModal() {
+    document.getElementById('promoModal').classList.remove('hidden');
+    document.getElementById('mensagemPromocao').value = '';
+    document.getElementById('promoProgress').classList.add('hidden');
+}
+
+function closePromoModal() {
+    document.getElementById('promoModal').classList.add('hidden');
+}
+async function enviarPromocao() {
+    const mensagem = document.getElementById('mensagemPromocao').value.trim();
+    const sendBtn = document.getElementById('sendPromoBtn');
+    const progressDiv = document.getElementById('promoProgress');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const promoStatus = document.getElementById('promoStatus');
+    
+    if (!mensagem) {
+        alert('Por favor, digite a mensagem de promoção');
+        return;
+    }
+    
+    try {
+        // Desabilitar botão e mostrar progresso
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
+        progressDiv.classList.remove('hidden');
+        
+        // Obter todos os clientes
+        const snapshot = await database.ref('clientes').once('value');
+        const clientes = snapshot.val();
+        
+        if (!clientes || Object.keys(clientes).length === 0) {
+            promoStatus.textContent = 'Nenhum cliente cadastrado para enviar promoção.';
+            return;
+        }
+        
+        const clientesArray = Object.entries(clientes);
+        const totalClientes = clientesArray.length;
+        let enviados = 0;
+        let erros = 0;
+        
+        // Atualizar progresso
+        progressText.textContent = `0/${totalClientes}`;
+        progressBar.style.width = '0%';
+        promoStatus.textContent = 'Preparando envio...';
+        
+        // Enviar para cada cliente
+        for (const [id, cliente] of clientesArray) {
+            try {
+                const telefone = cliente.telefone?.replace(/\D/g, '');
+                
+                if (telefone && telefone.length >= 10) {
+
+                    const now = new Date();
+                    const day = String(now.getDate()).padStart(2, '0');     // Dia (2 dígitos)
+                    const month = String(now.getMonth() + 1).padStart(2, '0'); // Mês (2 dígitos)
+                    const year = now.getFullYear();                         // Ano (4 dígitos)  
+
+                    // Registrar no Firebase que foi enviado
+                        await database.ref(`promocoes_pendentes/ ||${mensagem} || Mandado_DIA: ${year} ${month} ${day}`).push({
+                         mensagem: mensagem,
+                         dataEnvio: Date.now()
+                            });
+                    
+                    enviados++;
+                } else {
+                    erros++;
+                }
+            } catch (error) {
+                console.error(`Erro ao enviar para ${cliente.nome}:`, error);
+                erros++;
+            }
+            
+            // Atualizar progresso
+            const progresso = Math.round((enviados + erros) / totalClientes * 100);
+            progressBar.style.width = `${progresso}%`;
+            progressText.textContent = `${enviados + erros}/${totalClientes}`;
+            promoStatus.textContent = `Enviados: ${enviados} | Erros: ${erros}`;
+            
+            // Pequeno delay entre envios para evitar bloqueio
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        // Resultado final
+        promoStatus.textContent = `Concluído! Enviados: ${enviados} | Erros: ${erros}`;
+        alert(`Promoção enviada para ${enviados} clientes com ${erros} erros.`);
+        
+    } catch (error) {
+        console.error('Erro ao enviar promoções:', error);
+        promoStatus.textContent = 'Erro ao enviar promoções: ' + error.message;
+    } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar';
+    }
+}
+
     </script>
+    <div id="promoModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-800">Enviar Promoção</h3>
+            <button onclick="closePromoModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="mb-4">
+            <label for="mensagemPromocao" class="block text-sm font-medium text-gray-700 mb-1">Mensagem:</label>
+            <textarea id="mensagemPromocao" rows="5" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-rose-500 focus:border-rose-500"></textarea>
+        </div>
+        
+        <div class="flex justify-end gap-3">
+            <button onclick="closePromoModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                Cancelar
+            </button>
+            <button onclick="enviarPromocao()" id="sendPromoBtn" class="px-4 py-2 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-lg hover:from-rose-600 hover:to-pink-700 transition">
+                <i class="fas fa-paper-plane mr-2"></i>Enviar
+            </button>
+        </div>
+        
+        <div id="promoProgress" class="mt-4 hidden">
+            <div class="flex items-center">
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="progressBar" class="bg-rose-600 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+                <span id="progressText" class="ml-2 text-sm text-gray-600">0/0</span>
+            </div>
+            <p id="promoStatus" class="text-sm text-gray-500 mt-2">Preparando envio...</p>
+        </div>
+    </div>
+</div>
 </body>
 </html>
